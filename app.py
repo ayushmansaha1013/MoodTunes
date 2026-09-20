@@ -62,9 +62,8 @@ with col1:
 
             st.session_state.captures.append(result[0]['emotion'])
             st.success(f"Capture {len(st.session_state.captures)} added.")
-        except Exception as e:
+        except Exception:
             st.error("Couldn't detect a face in this photo. Try again or use manual selection below.")
-            st.exception(e)  # TEMPORARY - shows the real error for debugging. Remove once fixed.
 
 with col2:
     if st.button("🔄 Reset captures"):
@@ -140,40 +139,44 @@ if final_emotion:
     st.caption(f"Mood: **{final_emotion}** → Searching for: *{query}*")
 
     with st.spinner("Finding songs for your mood..."):
-        try:
-            from ytmusicapi import YTMusic
-            yt_test = YTMusic()
-            raw_results = yt_test.search(query, filter="songs", limit=5)
-            st.write(f"DEBUG: Raw API returned {len(raw_results)} results")
-            st.write(raw_results[:1])  # show one raw result to inspect structure
-            songs = search_songs(query, limit=5)[:5]
-            st.write(f"DEBUG: Processed into {len(songs)} songs")
-        except Exception as e:
-            st.error("Something went wrong while searching for songs.")
-            st.exception(e)
-            songs = []
+        songs = search_songs(query, limit=5)[:5]
 
     if not st.session_state.history or st.session_state.history[-1]["emotion"] != final_emotion:
         st.session_state.history.append({"emotion": final_emotion, "songs": songs})
 
     st.subheader("🎧 Recommended for you")
 
+    if not songs:
+        st.info("No songs found for this mood right now. Try again in a moment.")
+
     for song in songs:
-        is_open = st.session_state.expanded_song == song["videoId"]
+        song_key = song.get("previewUrl") or song["title"]
+        is_open = st.session_state.expanded_song == song_key
+
         with st.expander(f"🎵 {song['title']} — {song['artist']}", expanded=is_open):
             st.caption(f"💡 {get_explanation_for_emotion(final_emotion)}")
-            if song["videoId"]:
-                st.video(f"https://youtube.com/watch?v={song['videoId']}")
+
+            if song.get("thumbnail"):
+                st.image(song["thumbnail"], width=100)
+
+            if song.get("previewUrl"):
+                st.audio(song["previewUrl"])
+            else:
+                st.caption("No preview available.")
+
+            if song.get("trackViewUrl"):
+                st.markdown(f"[🎧 Open full song on Apple Music]({song['trackViewUrl']})")
 
             already_bookmarked = any(
-                b["videoId"] == song["videoId"] for b in st.session_state.bookmarks
+                b.get("previewUrl") == song.get("previewUrl") and b["title"] == song["title"]
+                for b in st.session_state.bookmarks
             )
             if already_bookmarked:
                 st.caption("❤️ Bookmarked")
             else:
-                if st.button("🤍 Bookmark this song", key=f"bookmark_{song['videoId']}"):
+                if st.button("🤍 Bookmark this song", key=f"bookmark_{song_key}_{song['title']}"):
                     st.session_state.bookmarks.append(song)
-                    st.session_state.expanded_song = song["videoId"]
+                    st.session_state.expanded_song = song_key
 
 # ---------------- Sidebar: History + Bookmarks ----------------
 with st.sidebar:
@@ -200,7 +203,10 @@ with st.sidebar:
         for song in st.session_state.bookmarks:
             st.write(f"**{song['title']}**")
             st.write(song['artist'])
-            st.markdown(f"[▶️ Play](https://youtube.com/watch?v={song['videoId']})")
+            if song.get("previewUrl"):
+                st.audio(song["previewUrl"])
+            if song.get("trackViewUrl"):
+                st.markdown(f"[🎧 Open on Apple Music]({song['trackViewUrl']})")
             st.divider()
     else:
         st.caption("No bookmarks yet. Click 🤍 on a song to save it.")
