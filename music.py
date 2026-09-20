@@ -1,18 +1,41 @@
-from ytmusicapi import YTMusic
+import requests
 
-ytmusic = YTMusic()  # No login/API key needed for search
+ITUNES_SEARCH_URL = "https://itunes.apple.com/search"
+
 
 def search_songs(query: str, limit=5):
-    """Search YouTube Music and return a clean list of song dicts."""
-    results = ytmusic.search(query, filter="songs", limit=limit)
+    """
+    Search for songs using Apple's iTunes Search API (free, no API key required,
+    and works reliably from cloud servers unlike YouTube-based scraping APIs).
+
+    Returns a list of dicts with the same shape the app expects:
+    { "title": ..., "artist": ..., "videoId": ..., "thumbnail": ..., "previewUrl": ... }
+    """
+    params = {
+        "term": query,
+        "media": "music",
+        "entity": "song",
+        "limit": limit,
+    }
+
+    try:
+        response = requests.get(ITUNES_SEARCH_URL, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+    except Exception:
+        return []
+
     songs = []
-    for r in results:
+    for item in data.get("results", []):
         songs.append({
-            "title": r.get("title"),
-            "artist": r["artists"][0]["name"] if r.get("artists") else "Unknown",
-            "videoId": r.get("videoId"),
-            "thumbnail": r["thumbnails"][-1]["url"] if r.get("thumbnails") else None,
+            "title": item.get("trackName", "Unknown Title"),
+            "artist": item.get("artistName", "Unknown Artist"),
+            "videoId": None,  # no longer using YouTube video IDs
+            "thumbnail": item.get("artworkUrl100"),
+            "previewUrl": item.get("previewUrl"),  # 30-second audio preview
+            "trackViewUrl": item.get("trackViewUrl"),  # link to open in Apple Music/iTunes
         })
+
     return songs
 
 
@@ -23,4 +46,5 @@ if __name__ == "__main__":
     print(f"Results for: {query}\n")
     for s in songs:
         print(f"{s['title']} — {s['artist']}")
-        print(f"  https://youtube.com/watch?v={s['videoId']}\n")
+        print(f"  Preview: {s['previewUrl']}")
+        print(f"  Link: {s['trackViewUrl']}\n")
