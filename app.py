@@ -165,8 +165,13 @@ if final_emotion:
             else:
                 st.caption("No preview available.")
 
-            if song.get("trackViewUrl"):
-                st.markdown(f"[🎧 Open full song on Apple Music]({song['trackViewUrl']})")
+            if song.get("previewUrl"):
+                st.audio(song["previewUrl"])
+
+            st.link_button(
+                "▶️ Watch Full Song on YouTube",
+                song["youtubeUrl"]
+            )
 
             already_bookmarked = any(
                 b.get("previewUrl") == song.get("previewUrl") and b["title"] == song["title"]
