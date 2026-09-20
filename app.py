@@ -141,11 +141,16 @@ if final_emotion:
 
     with st.spinner("Finding songs for your mood..."):
         try:
+            from ytmusicapi import YTMusic
+            yt_test = YTMusic()
+            raw_results = yt_test.search(query, filter="songs", limit=5)
+            st.write(f"DEBUG: Raw API returned {len(raw_results)} results")
+            st.write(raw_results[:1])  # show one raw result to inspect structure
             songs = search_songs(query, limit=5)[:5]
-            st.write(f"DEBUG: Found {len(songs)} songs")  # TEMPORARY
+            st.write(f"DEBUG: Processed into {len(songs)} songs")
         except Exception as e:
             st.error("Something went wrong while searching for songs.")
-            st.exception(e)  # TEMPORARY
+            st.exception(e)
             songs = []
 
     if not st.session_state.history or st.session_state.history[-1]["emotion"] != final_emotion:
