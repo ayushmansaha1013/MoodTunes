@@ -140,6 +140,7 @@ if final_emotion:
 
     with st.spinner("Finding songs for your mood..."):
         songs = search_songs(query, limit=5)[:5]
+        st.write(f"DEBUG: query='{query}', songs found={len(songs)}")
 
     if not st.session_state.history or st.session_state.history[-1]["emotion"] != final_emotion:
         st.session_state.history.append({"emotion": final_emotion, "songs": songs})
