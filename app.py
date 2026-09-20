@@ -62,8 +62,10 @@ with col1:
 
             st.session_state.captures.append(result[0]['emotion'])
             st.success(f"Capture {len(st.session_state.captures)} added.")
-        except Exception:
+        except Exception as e:
             st.error("Couldn't detect a face in this photo. Try again or use manual selection below.")
+            st.exception(e)  # TEMPORARY - shows the real error for debugging. Remove once fixed.
+
 with col2:
     if st.button("🔄 Reset captures"):
         st.session_state.captures = []
