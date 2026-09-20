@@ -100,11 +100,9 @@ with col1:
                 f"Capture {len(st.session_state.captures)} added."
             )
 
-        except Exception:
-            st.error(
-                "Couldn't detect a face in this photo. "
-                "Try again or use manual selection below."
-            )
+        except Exception as e:
+            st.error("❌ Emotion detection failed.")
+            st.exception(e)
 
 
 with col2:
