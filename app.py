@@ -139,7 +139,7 @@ if final_emotion:
     query = st.session_state.current_query
     st.caption(f"Mood: **{final_emotion}** → Searching for: *{query}*")
 
-        with st.spinner("Finding songs for your mood..."):
+    with st.spinner("Finding songs for your mood..."):
         try:
             songs = search_songs(query, limit=5)[:5]
             st.write(f"DEBUG: Found {len(songs)} songs")  # TEMPORARY
