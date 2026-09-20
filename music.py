@@ -22,8 +22,11 @@ def search_songs(query: str, limit=5):
         response = requests.get(ITUNES_SEARCH_URL, params=params, timeout=10)
         response.raise_for_status()
         data = response.json()
-    except Exception:
+    except Exception as e:
+        print(f"DEBUG iTunes API error: {e}")  # TEMPORARY
         return []
+
+    print(f"DEBUG: iTunes returned {len(data.get('results', []))} raw results")  # TEMPORARY
 
     songs = []
     for item in data.get("results", []):
